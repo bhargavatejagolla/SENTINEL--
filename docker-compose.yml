@@ -55,6 +55,7 @@ services:
       - NEO4J_URI=bolt://neo4j:7687
       - DATABASE_URL=postgresql://sentinel:sentinel123@postgres:5432/sentinel_db
       - GROQ_API_KEY=${GROQ_API_KEY}
+      - ANONYMIZED_TELEMETRY=False
     volumes:
       - ./backend:/app
     restart: unless-stopped
@@ -69,9 +70,6 @@ services:
       - "3001:3000"
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     restart: unless-stopped
 
   # 6. SIMULATOR - Generates live IoT data stream automatically
@@ -80,7 +78,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sentinel_simulator
-    command: python simulator.py
+    command: python simulation/simulator.py
     depends_on:
       - redis
     environment:

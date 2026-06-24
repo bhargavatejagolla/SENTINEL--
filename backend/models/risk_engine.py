@@ -126,8 +126,8 @@ def predict_risk(live_data):
         # Extract features
         feature_vector, feature_dict = extract_features_from_live_data(live_data)
         
-        # Scale
-        scaled = scaler.transform(feature_vector)
+        import pandas as pd
+        scaled = scaler.transform(pd.DataFrame(feature_vector, columns=FEATURE_NAMES))
         
         # Predict
         risk = float(model.predict(scaled)[0])
