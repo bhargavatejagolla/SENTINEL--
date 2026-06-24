@@ -5,12 +5,12 @@ import threading
 import time
 import asyncio
 from datetime import datetime
-import risk_engine
-import senate_agent
-import what_if_engine
+from models import risk_engine
+from agents import senate_agent
+from models import what_if_engine
 import black_box
 from knowledge_base import build_rag
-import compliance_engine
+from compliance import compliance_engine
 
 app = FastAPI(title="SENTINEL-Φ Backend", version="2.0.0")
 
@@ -311,3 +311,127 @@ async def websocket_endpoint(websocket: WebSocket):
             })
     except WebSocketDisconnect:
         print("🔌 WebSocket client disconnected")
+
+# --- SCENARIO ORCHESTRATION ---
+
+async def run_scenario_sequence(scenario_name: str):
+    """Asynchronously injects mock data to simulate the scenario without blocking FastAPI."""
+    if not r:
+        return
+        
+    global latest_enhanced_data
+    # Reset Timeline
+    latest_enhanced_data["timeline"] = []
+    latest_enhanced_data["countdown"] = None
+    latest_enhanced_data["scenario_active"] = True
+    
+    def log_timeline(time_str, event):
+        latest_enhanced_data.setdefault("timeline", []).append({"time": time_str, "event": event})
+        
+    def inject(data):
+        r.xadd("sensor_stream", {"data": json.dumps(data)}, maxlen=100)
+    
+    if scenario_name == "critical_incident":
+        print("🎬 STARTING CRITICAL INCIDENT SIMULATION 🎬")
+        log_timeline("00:00", "Simulation Started. Normal Operations.")
+        
+        # 1. T+0s: Normal Operations
+        data = {
+            "timestamp": datetime.now().isoformat(),
+            "sensors": {"S1": 10, "S2": 12, "S3": 5},
+            "shift": "DAY",
+            "active_permits": [],
+            "fatigue_index": 0.1,
+            "cctv_intrusion": False
+        }
+        inject(data)
+        await asyncio.sleep(5)
+        
+        # 2. T+5s: Shift Change (Fatigue rises)
+        log_timeline("00:05", "Shift Change to NIGHT. Operator Fatigue Rising.")
+        data["shift"] = "NIGHT"
+        data["fatigue_index"] = 0.6
+        data["sensors"]["S1"] = 15
+        inject(data)
+        await asyncio.sleep(5)
+        
+        # 3. T+10s: Hot Work Permit Issued
+        log_timeline("00:10", "Hot Work Permit Issued in Zone Z1.")
+        data["active_permits"] = ["HOT_WORK_Z1"]
+        data["sensors"]["S1"] = 30
+        inject(data)
+        await asyncio.sleep(5)
+        
+        # 4. T+15s: CCTV Intrusion Detected
+        log_timeline("00:15", "CCTV Intrusion Detected. Operator left workstation.")
+        data["cctv_intrusion"] = True
+        inject(data)
+        await asyncio.sleep(5)
+        
+        # 5. T+20s: Gas Spike (Triggers Senate)
+        log_timeline("00:20", "Critical Gas Spike Detected! Senate Activated.")
+        latest_enhanced_data["countdown"] = 30
+        data["sensors"]["S1"] = 85
+        data["sensors"]["S2"] = 75
+        inject(data)
+        
+        # Countdown loop
+        for i in range(30, 0, -1):
+            latest_enhanced_data["countdown"] = i
+            if i == 20:
+                log_timeline("00:30", "Senate Debate Concluded. Proposed Delay.")
+            if i == 10:
+                log_timeline("00:40", "Compliance Guardrail VETOED Senate. Override Initiated.")
+            await asyncio.sleep(1)
+            
+        latest_enhanced_data["countdown"] = 0
+        log_timeline("00:50", "EVACUATION EXECUTED. Black Box Generated.")
+        
+        # Auto-execute
+        execute_plan()
+        
+    elif scenario_name == "explosion":
+        print("🎬 STARTING EMERGENCY EXPLOSION SCENARIO 🎬")
+        log_timeline("00:00", "Catastrophic Failure Detected. Gas > 99%.")
+        data = {
+            "timestamp": datetime.now().isoformat(),
+            "sensors": {"S1": 99, "S2": 99, "S3": 99},
+            "shift": "NIGHT",
+            "active_permits": ["HOT_WORK_Z1", "CONFINED_SPACE_Z1"],
+            "fatigue_index": 0.9,
+            "cctv_intrusion": True
+        }
+        latest_enhanced_data["countdown"] = 10
+        inject(data)
+        for i in range(10, 0, -1):
+            latest_enhanced_data["countdown"] = i
+            await asyncio.sleep(1)
+        latest_enhanced_data["countdown"] = 0
+        log_timeline("00:10", "EMERGENCY EVACUATION EXECUTED.")
+        execute_plan()
+        
+    elif scenario_name == "monitor":
+        print("🔄 RESETTING TO MONITORING BASELINE 🔄")
+        data = {
+            "timestamp": datetime.now().isoformat(),
+            "sensors": {"S1": 5, "S2": 5, "S3": 2},
+            "shift": "DAY",
+            "active_permits": [],
+            "fatigue_index": 0.1,
+            "cctv_intrusion": False
+        }
+        inject(data)
+        latest_enhanced_data["timeline"] = []
+        latest_enhanced_data["countdown"] = None
+        latest_enhanced_data["scenario_active"] = False
+        latest_enhanced_data["action"] = {"status": "Idle", "message": ""}
+
+@app.post("/api/scenario/{scenario_name}")
+async def trigger_scenario(scenario_name: str):
+    """API Endpoint to trigger a specific simulation scenario in the background."""
+    valid_scenarios = ["monitor", "critical_incident", "explosion"]
+    if scenario_name not in valid_scenarios:
+        return {"error": "Invalid scenario name"}
+        
+    asyncio.create_task(run_scenario_sequence(scenario_name))
+    return {"status": "success", "message": f"Scenario {scenario_name} initiated."}

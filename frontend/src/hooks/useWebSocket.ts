@@ -48,6 +48,9 @@ interface WebSocketData {
     similar_events: number;
     trajectory: number[];
   };
+  timeline?: { time: string; event: string }[];
+  countdown?: number | null;
+  scenario_active?: boolean;
 }
 
 export function useWebSocket() {

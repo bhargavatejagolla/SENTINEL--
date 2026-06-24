@@ -1,5 +1,6 @@
 import json
 import random
+from agents import senate_agents
 import numpy as np
 from datetime import datetime
 

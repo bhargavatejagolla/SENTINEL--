@@ -1,0 +1,24 @@
+{
+  "rules": [
+    {
+      "id": "OISD-4.3",
+      "name": "Mandatory Evacuation for High Gas and Hot Work",
+      "conditions": {
+        "min_risk_score": 75,
+        "required_contributors": ["gas_hotwork"]
+      },
+      "forced_decision": "Evacuate",
+      "reason": "OISD RULE 4.3: Absolute evacuation required when high gas levels overlap with active hot work permits. Vetoing AI delay."
+    },
+    {
+      "id": "OISD-9.1",
+      "name": "Stop Work for Critical Pressure",
+      "conditions": {
+        "min_risk_score": 85,
+        "required_contributors": ["pressure_anomaly"]
+      },
+      "forced_decision": "Stop",
+      "reason": "OISD RULE 9.1: Immediate cessation of operations required during critical pressure anomalies."
+    }
+  ]
+}
