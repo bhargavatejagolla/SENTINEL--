@@ -1,0 +1,126 @@
+{
+  "zones": [
+    {
+      "id": "Z1",
+      "name": "Coke Oven Battery",
+      "hazard_level": "EXTREME",
+      "risk_multiplier": 1.8,
+      "coordinates": { "x": 100, "y": 200 }
+    },
+    {
+      "id": "Z2",
+      "name": "Gas Processing Unit",
+      "hazard_level": "HIGH",
+      "risk_multiplier": 1.5,
+      "coordinates": { "x": 300, "y": 150 }
+    },
+    {
+      "id": "Z3",
+      "name": "Storage & Tanks",
+      "hazard_level": "HIGH",
+      "risk_multiplier": 1.4,
+      "coordinates": { "x": 500, "y": 200 }
+    },
+    {
+      "id": "Z4",
+      "name": "Maintenance Workshop",
+      "hazard_level": "MEDIUM",
+      "risk_multiplier": 1.2,
+      "coordinates": { "x": 200, "y": 350 }
+    },
+    {
+      "id": "Z5",
+      "name": "Loading & Dispatch",
+      "hazard_level": "MEDIUM",
+      "risk_multiplier": 1.1,
+      "coordinates": { "x": 400, "y": 350 }
+    }
+  ],
+  "equipment": [
+    {
+      "id": "E1",
+      "name": "Compressor C3",
+      "zone_id": "Z1",
+      "failure_rate": 0.15
+    },
+    { "id": "E2", "name": "Blower B7", "zone_id": "Z1", "failure_rate": 0.1 },
+    { "id": "E3", "name": "Reactor R4", "zone_id": "Z2", "failure_rate": 0.2 },
+    {
+      "id": "E4",
+      "name": "Heat Exchanger HX9",
+      "zone_id": "Z2",
+      "failure_rate": 0.12
+    },
+    {
+      "id": "E5",
+      "name": "Storage Tank T12",
+      "zone_id": "Z3",
+      "failure_rate": 0.18
+    },
+    { "id": "E6", "name": "Pump P8", "zone_id": "Z3", "failure_rate": 0.08 },
+    {
+      "id": "E7",
+      "name": "Welding Machine W2",
+      "zone_id": "Z4",
+      "failure_rate": 0.05
+    },
+    { "id": "E8", "name": "Grinder G5", "zone_id": "Z4", "failure_rate": 0.04 },
+    {
+      "id": "E9",
+      "name": "Conveyor C11",
+      "zone_id": "Z5",
+      "failure_rate": 0.07
+    },
+    {
+      "id": "E10",
+      "name": "Forklift F3",
+      "zone_id": "Z5",
+      "failure_rate": 0.06
+    }
+  ],
+  "sensors": [
+    { "id": "S1", "type": "gas", "zone_id": "Z1", "threshold": 50 },
+    { "id": "S2", "type": "gas", "zone_id": "Z1", "threshold": 50 },
+    { "id": "S3", "type": "pressure", "zone_id": "Z1", "threshold": 120 },
+    { "id": "S4", "type": "gas", "zone_id": "Z2", "threshold": 45 },
+    { "id": "S5", "type": "gas", "zone_id": "Z2", "threshold": 45 },
+    { "id": "S6", "type": "temperature", "zone_id": "Z2", "threshold": 400 },
+    { "id": "S7", "type": "gas", "zone_id": "Z3", "threshold": 40 },
+    { "id": "S8", "type": "gas", "zone_id": "Z3", "threshold": 40 },
+    { "id": "S9", "type": "vibration", "zone_id": "Z3", "threshold": 5.0 },
+    { "id": "S10", "type": "gas", "zone_id": "Z4", "threshold": 35 },
+    { "id": "S11", "type": "gas", "zone_id": "Z4", "threshold": 35 },
+    { "id": "S12", "type": "temperature", "zone_id": "Z4", "threshold": 150 },
+    { "id": "S13", "type": "gas", "zone_id": "Z5", "threshold": 30 },
+    { "id": "S14", "type": "gas", "zone_id": "Z5", "threshold": 30 },
+    { "id": "S15", "type": "vibration", "zone_id": "Z5", "threshold": 4.5 },
+    { "id": "S16", "type": "pressure", "zone_id": "Z2", "threshold": 130 },
+    { "id": "S17", "type": "temperature", "zone_id": "Z1", "threshold": 500 },
+    { "id": "S18", "type": "gas", "zone_id": "Z3", "threshold": 40 },
+    { "id": "S19", "type": "vibration", "zone_id": "Z2", "threshold": 4.8 },
+    { "id": "S20", "type": "pressure", "zone_id": "Z5", "threshold": 110 }
+  ],
+  "permits": [
+    {
+      "id": "P001",
+      "type": "HOT_WORK",
+      "zone_id": "Z4",
+      "status": "ACTIVE",
+      "issued_at": "2026-06-24T10:00:00"
+    },
+    {
+      "id": "P002",
+      "type": "CONFINED_SPACE",
+      "zone_id": "Z1",
+      "status": "ACTIVE",
+      "issued_at": "2026-06-24T12:00:00"
+    },
+    {
+      "id": "P003",
+      "type": "MAINTENANCE",
+      "zone_id": "Z2",
+      "status": "ACTIVE",
+      "issued_at": "2026-06-24T14:00:00"
+    }
+  ]
+}
