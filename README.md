@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=250&section=header&text=SENTINEL-Φ&fontSize=90&fontAlignY=35&desc=AI-Powered%20Industrial%20Safety%20OS&descAlignY=55&descAlign=62&fontColor=ffffff" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=250&section=header&text=SENTINEL-Φ&fontSize=90&fontAlignY=35&desc=Enterprise-Grade%20Industrial%20Safety%20OS&descAlignY=55&descAlign=62&fontColor=ffffff" />
   
   <h3><strong>ET AI Hackathon 2.0 | Grand Finale Submission</strong></h3>
   <p><em>Predicting the Unpredictable. Preventing the Unpreventable.</em></p>
@@ -7,7 +7,7 @@
   <p align="center">
     <img src="https://img.shields.io/badge/Status-Zero%20Harm%20Operations-success?style=for-the-badge&logo=shield" />
     <img src="https://img.shields.io/badge/Architecture-Next.js%20%7C%20FastAPI-blue?style=for-the-badge&logo=docker" />
-    <img src="https://img.shields.io/badge/AI-XGBoost%20%7C%20YOLOv8%20%7C%20LangGraph-orange?style=for-the-badge&logo=openai" />
+    <img src="https://img.shields.io/badge/AI-YOLOv8%20%7C%20Groq%20%7C%20LangGraph-orange?style=for-the-badge&logo=openai" />
   </p>
 </div>
 
@@ -18,7 +18,7 @@
 To start the entire Industrial Safety Operating System (Frontend, Backend, Redis, Neo4j, Postgres, and the IoT Simulator), you only need **one command**:
 
 ```bash
-docker compose up -d
+docker-compose up --build -d
 ```
 *Wait 30 seconds.* <br/>
 *Open `http://localhost:3001` to view the Dashboard.* <br/>
@@ -35,26 +35,27 @@ Over 6,500 fatal workplace accidents occurred in India in FY2023. In incidents l
 ## 🚀 The WOW Moments (Our Signature Innovations)
 
 <details open>
-<summary><b>1. The Intelligence Layer Panel 🧠</b></summary>
-Right at the top of the dashboard, there is an undeniable "truth panel" aggregating:
-- <b>Compound Risk</b>
-- <b>Safety Culture Score</b> (Trending ↑ or ↓ based on systemic anomalies to combat "Normalization of Deviance")
-- <b>Operator Reliability Index</b> (Calculated via zone fatigue)
-- <b>Historical Precedents</b> (Counting exact similar near-misses found via RAG memory)
+<summary><b>1. Real Industrial Telemetry Engine 🏭</b></summary>
+Unlike typical hackathon projects relying on `random.uniform()`, SENTINEL-Φ ingests actual row-by-row data from the `Industrial_fault_detection.csv` dataset. The system streams actual temperature, vibration, and pressure readings through Redis, mathematically predicting faults exactly as they would occur in a real plant.
 </details>
 
 <details open>
-<summary><b>2. Predictive Risk Trajectory 📈</b></summary>
-Instead of saying "Current risk is 84%", the UI now displays a dynamic trajectory for <b>+5m, +10m, and +15m</b>, proving the system mathematically predicts the disaster before it happens.
+<summary><b>2. YOLOv8 CCTV Analytics (PPE & Intrusion) 📹</b></summary>
+The system features a complete computer vision pipeline. Using the frontend's **CCTV Analytics** view, you can upload incident footage. The backend processes the video via Ultralytics YOLOv8, detecting unauthorized personnel or missing safety helmets. Detection of a PPE violation instantly correlates with IoT sensor data to spike the plant-wide Risk Score.
 </details>
 
 <details open>
-<summary><b>3. The Multi-Agent Autonomous Senate 🏛️</b></summary>
-When things go critical, a LangGraph Senate composed of <b>Safety, Operations, Compliance, and Emergency Response</b> agents debates the best intervention strategy dynamically.
+<summary><b>3. Dynamic Root Cause & Shift Fatigue Engine 🧠</b></summary>
+Risk isn't just a number. The system integrates industrial psychology. If an incident occurs during the Night Shift, the base risk score is mathematically multiplied (1.25x), and Operator Reliability plummets. When risk crosses 70%, the AI dynamically generates a composite Root Cause (e.g., <i>"Process Anomaly ↑ + Worker Intrusion/No PPE + Night Shift Fatigue"</i>).
 </details>
 
 <details open>
-<summary><b>4. Deterministic Compliance Guardrail 🛑</b></summary>
+<summary><b>4. The Multi-Agent Autonomous Senate 🏛️</b></summary>
+When things go critical, a LangGraph Senate composed of <b>Safety, Operations, Compliance, and Emergency Response</b> agents debates the best intervention strategy dynamically. They are backed by a ChromaDB RAG memory loaded with the hard facts of the 1984 Bhopal Gas Tragedy, the 2020 Vizag Leak, and strict OISD-STD-105 regulations.
+</details>
+
+<details open>
+<summary><b>5. Deterministic Compliance Guardrail 🛑</b></summary>
 The ultimate safety net. If the LLM Senate hallucinates an unsafe decision against OISD Factory Acts, this Python-native engine <b>VETOES</b> the AI and forces an evacuation.
 </details>
 
@@ -65,47 +66,46 @@ The ultimate safety net. If the LLM Senate hallucinates an unsafe decision again
 ```mermaid
 graph TD
     subgraph Ingestion
-    A[IoT Simulator] --> |High Frequency| C(Redis Streams)
+    A[Industrial CSV Dataset] --> |IoT Simulator| C(Redis Streams)
     B[YOLOv8 Vision] --> |CCTV Intrusion| C
     end
     
     subgraph Intelligence
     C --> D{XGBoost Risk Engine}
-    D --> |SHAP Explainer| E[Predictive Trajectory]
+    D --> |Shift Fatigue + Root Cause| E[Predictive Trajectory]
     end
     
     subgraph Orchestration
     E --> |Risk > 70%| F[LangGraph AI Senate]
     F --> |Query Context| G[(ChromaDB RAG Memory)]
     F --> |Verify| H{OISD Compliance Guardrail}
-    H --> |Approved/Vetoed| I[Monte Carlo Simulator]
+    H --> |Approved/Vetoed| I[Groq AI Copilot]
     end
     
     subgraph Execution
     I --> J[Next.js Dashboard UI]
-    J --> |Execution| K[Multilingual Audio Dispatch]
+    J --> |CCTV Upload| K[Backend Ultralytics]
     J --> |Immutable Hash| L[(PostgreSQL Black Box)]
     end
 ```
 
 ---
 
-## 🎬 How to Execute the "Critical Incident Simulation"
+## 🎬 How to Run the Perfect Judge Demo
 
 During the presentation, use the Digital Disaster Twin to show the exact lifecycle of an industrial crisis.
 
-1. **Deploy the System:** `docker compose up -d`
+1. **Deploy the System:** `docker-compose up --build -d`
 2. **Open the Dashboard:** Navigate to `http://localhost:3001`.
-3. **Trigger the Simulation:** In a new terminal, inject the crisis:
-   ```bash
-   docker exec -it sentinel_backend python run_demo.py
-   ```
-4. **Narrate the Sequence:**
-   - Watch the shift change and Operator Reliability drop.
-   - Watch the CCTV Vision (YOLOv8) detect an unauthorized intrusion.
+3. **Trigger the Vision AI:** Navigate to the **CCTV Analytics** tab and upload an MP4 of a PPE violation. Watch YOLOv8 log the violation.
+4. **Narrate the Core Sequence:**
+   - Immediately switch back to the **Command Center**.
+   - Watch the live telemetry from the CSV dataset push the system towards a fault.
+   - Point out the **Shift Fatigue** multiplier actively degrading Operator Reliability.
+   - Point out the **Root Cause** engine declaring exactly what is happening.
    - Watch the Risk Trajectory spike to 100%.
-   - Watch the Senate debate, get vetoed by Compliance, and trigger the evacuation.
-   - Click the red **EXECUTE** button on the UI.
+   - Watch the AI Senate debate, recall Bhopal/Vizag from RAG, get vetoed by Compliance, and trigger the evacuation.
+   - Click the red **EXECUTE INTERVENTION** button on the UI.
 
 ---
 <div align="center">

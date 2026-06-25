@@ -2,24 +2,36 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import Dashboard from '@/components/Dashboard';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
-// Dynamically import ThreeScene to avoid SSR issues with Three.js
+// Views
+import HeroLanding from '@/components/views/HeroLanding';
+import CommandCenter from '@/components/views/CommandCenter';
+import AISenate from '@/components/views/AISenate';
+import HistoricalMemory from '@/components/views/HistoricalMemory';
+import WhatIfSimulator from '@/components/views/WhatIfSimulator';
+import ExecuteIntervention from '@/components/views/ExecuteIntervention';
+import CCTVAnalytics from '@/components/views/CCTVAnalytics';
+import AICopilot from '@/components/AICopilot';
+
 const ThreeScene = dynamic(() => import('@/components/ThreeScene'), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-[500px] bg-slate-800/50 rounded-xl border border-white/5 flex items-center justify-center">
-      <div className="text-gray-500">Loading 3D Scene...</div>
-    </div>
-  ),
+  loading: () => <div className="w-full h-full flex items-center justify-center text-slate-500 font-mono text-xs uppercase tracking-widest animate-pulse">Initializing Digital Twin...</div>,
 });
 
 export default function Home() {
   const { data, isConnected } = useWebSocket();
-  const riskScore = data?.risk?.score || 10;
+  const [currentView, setCurrentView] = useState<'landing' | 'command' | 'twin' | 'senate' | 'history' | 'whatif' | 'execute' | 'cctv'>('landing');
 
-  // Parse zones from topology if available, or use defaults
+  // Safely extract data
+  const riskScore = data?.risk?.score || 0;
+  const intelligence = data?.intelligence_layer;
+  const countdown = data?.countdown;
+  const senate = data?.senate;
+  const compliance = data?.compliance;
+  const whatif = data?.whatif;
+  const action = data?.action;
+
   const zones = [
     { id: 'Z1', name: 'Coke Oven', x: -4, y: 2, risk_multiplier: 1.8 },
     { id: 'Z2', name: 'Gas Unit', x: 0, y: 3, risk_multiplier: 1.5 },
@@ -28,36 +40,95 @@ export default function Home() {
     { id: 'Z5', name: 'Dispatch', x: 3, y: -2, risk_multiplier: 1.1 },
   ];
 
+  const triggerAction = async (endpoint: string) => {
+    try {
+      await fetch(`http://localhost:8001${endpoint}`, { method: 'POST' });
+    } catch (e) {
+      console.error("Action failed", e);
+    }
+  };
+
+  const navItems = [
+    { id: 'command', label: 'Command Center' },
+    { id: 'twin', label: 'Digital Twin' },
+    { id: 'cctv', label: 'CCTV Analytics' },
+    { id: 'senate', label: 'AI Senate' },
+    { id: 'whatif', label: 'What-If Simulation' },
+    { id: 'history', label: 'Historical Memory' },
+    { id: 'execute', label: 'Execute Intervention', isCritical: true },
+  ];
+
+  if (currentView === 'landing') {
+    return <HeroLanding onEnter={() => setCurrentView('command')} />;
+  }
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-gray-900 p-4 md:p-6">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">
-              SENTINEL-Φ
-            </h1>
-            <p className="text-xs text-gray-400 tracking-widest uppercase">
-              Cognitive Industrial Safety OS
-            </p>
+    <main className="h-screen w-screen bg-slate-950 overflow-hidden flex flex-col font-sans text-white selection:bg-cyan-500/30">
+      
+      {/* Top Navigation Bar */}
+      <header className="h-16 border-b border-white/5 bg-black/50 backdrop-blur-md flex items-center justify-between px-6 z-40 relative">
+        <div className="flex items-center gap-4">
+          <div className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400 cursor-pointer" onClick={() => setCurrentView('landing')}>
+            SENTINEL-Φ
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`px-3 py-1 rounded-full text-xs font-mono ${isConnected ? 'bg-green-500/20 text-green-400 border border-green-500/50' : 'bg-red-500/20 text-red-400 border border-red-500/50'}`}>
-              {isConnected ? '● LIVE' : '● OFFLINE'}
+          <div className="h-4 w-px bg-white/10 mx-2" />
+          <div className="flex gap-2">
+            {navItems.map(item => (
+              <button 
+                key={item.id}
+                onClick={() => setCurrentView(item.id as any)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
+                  currentView === item.id 
+                    ? item.isCritical ? 'bg-red-500/20 text-red-400 border border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-blue-500/20 text-blue-400 border border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]'
+                    : item.isCritical ? 'text-red-500/50 hover:bg-red-500/10 border border-transparent hover:border-red-500/30' : 'text-slate-400 hover:bg-white/5 border border-transparent hover:border-white/10'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {/* Demo Controls */}
+          <div className="flex gap-2 mr-4 bg-slate-900/50 p-1 rounded-full border border-white/5">
+            <button onClick={() => triggerAction('/api/scenario/monitor')} className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-[10px] hover:bg-slate-700" title="Normal">▶</button>
+            <button onClick={() => triggerAction('/api/scenario/critical_incident')} className="w-6 h-6 flex items-center justify-center rounded-full bg-orange-950 text-orange-500 text-[10px] hover:bg-orange-900" title="Incident">⚠</button>
+            <button onClick={() => triggerAction('/api/scenario/explosion')} className="w-6 h-6 flex items-center justify-center rounded-full bg-red-950 text-red-500 text-[10px] hover:bg-red-900" title="Explosion">🔥</button>
+          </div>
+          
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${isConnected ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-400' : 'bg-red-950/30 border-red-500/30 text-red-400'}`}>
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]' : 'bg-red-500'}`} />
+            <span className="text-[10px] uppercase tracking-widest font-bold">{isConnected ? 'LIVE' : 'OFFLINE'}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <div className="flex-1 relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat opacity-90">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-black z-0" />
+        
+        <div className="absolute inset-0 z-10">
+          {currentView === 'command' && <CommandCenter riskScore={riskScore} intelligence={intelligence} countdown={countdown} />}
+          
+          {currentView === 'twin' && (
+            <div className="w-full h-full p-6 animate-in fade-in duration-700">
+               <div className="w-full h-full bg-black/40 border border-white/10 rounded-2xl overflow-hidden relative shadow-[0_0_30px_rgba(59,130,246,0.1)]">
+                 <div className="absolute top-4 left-4 z-20 text-xs uppercase tracking-widest font-bold text-slate-400 bg-black/50 px-3 py-1 rounded-md border border-white/5 backdrop-blur-sm">Live Digital Twin (Plant A)</div>
+                 <ThreeScene riskScore={riskScore} zoneData={zones} />
+               </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* 3D Scene */}
-        <div className="mb-4">
-          <ThreeScene riskScore={riskScore} zoneData={zones} />
+          {currentView === 'senate' && <AISenate senate={senate} compliance={compliance} />}
+          {currentView === 'cctv' && <CCTVAnalytics />}
+          {currentView === 'history' && <HistoricalMemory intelligence={intelligence} />}
+          {currentView === 'whatif' && <WhatIfSimulator whatif={whatif} executeAction={() => triggerAction('/execute')} />}
+          {currentView === 'execute' && <ExecuteIntervention onExecute={() => triggerAction('/execute')} hasExecuted={action?.status === 'Executed'} />}
         </div>
-
-        {/* Dashboard Overlay (sits below or on top of 3D) */}
-        <Dashboard />
       </div>
 
-      {/* Logo is already fixed in layout.tsx - bottom-left */}
+      <AICopilot />
     </main>
   );
 }

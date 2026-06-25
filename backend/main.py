@@ -1,6 +1,12 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, File, UploadFile
+from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
+from groq import Groq
 import json
 import redis
+import shutil
 import threading
 import time
 import asyncio
@@ -74,10 +80,40 @@ def redis_listener():
                             
                             # --- STEP 1: RISK ENGINE ---
                             risk_result = risk_engine.predict_risk(raw_data)
-                            risk_score = risk_result.get("risk_score", 10)
-                            forecast_20m = risk_result.get("forecast_20m", risk_score)
+                            base_risk = risk_result.get("risk_score", 10)
+                            base_forecast = risk_result.get("forecast_20m", base_risk)
                             contributors = risk_result.get("contributors", {})
                             features = risk_result.get("features", {})
+                            
+                            # Shift Fatigue Engine
+                            shift_type = raw_data.get("shift", "DAY")
+                            shift_multiplier = 1.0
+                            if shift_type == "NIGHT":
+                                shift_multiplier = 1.25
+                                fatigue_index = 0.8
+                            elif shift_type == "12-HOUR":
+                                shift_multiplier = 1.4
+                                fatigue_index = 0.9
+                            else:
+                                fatigue_index = 0.2
+                                
+                            risk_score = min(100, int(base_risk * shift_multiplier))
+                            forecast_20m = min(100, int(base_forecast * shift_multiplier))
+                            
+                            # Root Cause Generation
+                            root_cause_str = "Stable"
+                            if risk_score > 60:
+                                rc_parts = []
+                                if sum(features.values()) > 50 or "gas" in str(contributors).lower():
+                                    rc_parts.append("Process Anomaly ↑")
+                                if raw_data.get("cctv_intrusion", False):
+                                    rc_parts.append("Worker Intrusion/No PPE")
+                                if raw_data.get("active_permits"):
+                                    rc_parts.append(f"Active Permit ({','.join(raw_data.get('active_permits'))})")
+                                if shift_type == "NIGHT":
+                                    rc_parts.append("Night Shift Fatigue")
+                                
+                                root_cause_str = " + ".join(rc_parts) if rc_parts else "Unknown Anomaly"
                             
                             # Update Safety Culture Score
                             global global_safety_culture, consecutive_high_risk
@@ -119,7 +155,6 @@ def redis_listener():
                                 zone_id = max(zone_scores, key=zone_scores.get)
                                 
                             # Intelligence Layer calculations
-                            fatigue_index = raw_data.get("fatigue_index", 0.0)
                             human_reliability = max(0, 100 - (fatigue_index * 100) - (20 if cctv_intrusion else 0))
                             
                             similar_events_count = 0
@@ -137,7 +172,8 @@ def redis_listener():
                             intelligence_layer = {
                                 "human_reliability": round(human_reliability, 1),
                                 "similar_events": similar_events_count,
-                                "trajectory": risk_result.get("trajectory", [risk_score]*4)
+                                "trajectory": risk_result.get("trajectory", [risk_score]*4),
+                                "root_cause": root_cause_str
                             }
                             
                             # --- STEP 3: SENATE & RAG & COMPLIANCE ---
@@ -298,6 +334,60 @@ def get_recent_events(limit: int = 10):
 def replay_event(event_id: str):
     return black_box.replay_event(event_id)
 
+class ChatMessage(BaseModel):
+    message: str
+
+@app.post("/api/chat")
+async def chat_endpoint(msg: ChatMessage):
+    try:
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+        context = json.dumps({
+            "risk_score": latest_enhanced_data.get("risk", {}).get("score", 0),
+            "senate_decision": latest_enhanced_data.get("senate", {}).get("decision", ""),
+            "safety_culture": latest_enhanced_data.get("safety_culture", {}).get("score", 0),
+            "countdown": latest_enhanced_data.get("countdown", "None"),
+        })
+        
+        system_prompt = f"You are the SENTINEL-Φ AI Copilot, an industrial safety expert. Keep answers very brief, urgent, and professional. Current plant context: {context}"
+        
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": msg.message}
+            ],
+            model="llama3-8b-8192",
+        )
+        return {"reply": chat_completion.choices[0].message.content}
+    except Exception as e:
+        return {"reply": f"SYSTEM ERROR: {str(e)}"}
+
+@app.post("/api/cctv/upload")
+async def upload_cctv(file: UploadFile = File(...)):
+    """
+    Simulated YOLOv8 inference endpoint for Hackathon Demo.
+    In a real app, this would use ultralytics YOLO to process the video frames.
+    For this demo, we accept the video, pretend to process it, and trigger a critical PPE violation.
+    """
+    file_location = f"temp_cctv_{file.filename}"
+    with open(file_location, "wb+") as file_object:
+        shutil.copyfileobj(file.file, file_object)
+    
+    # MOCK YOLOv8 INFERENCE DELAY
+    await asyncio.sleep(2)
+    
+    # Update global state to reflect a massive risk increase due to CCTV
+    latest_enhanced_data["cctv"] = {
+        "intrusion": True,
+        "message": "🚨 UNAUTHORIZED PERSONNEL (NO HELMET DETECTED)"
+    }
+    # Force risk up to simulate immediate impact
+    if "risk" in latest_enhanced_data:
+        latest_enhanced_data["risk"]["score"] = min(100, latest_enhanced_data["risk"]["score"] + 35)
+        
+    os.remove(file_location) # Clean up
+    
+    return {"status": "success", "detections": ["person", "no_helmet"], "risk_increase": 35}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -307,7 +397,7 @@ async def websocket_endpoint(websocket: WebSocket):
             await asyncio.sleep(0.5)
             await websocket.send_json({
                 "type": "update",
-                "data": latest_enhanced_data
+                "data": jsonable_encoder(latest_enhanced_data)
             })
     except WebSocketDisconnect:
         print("🔌 WebSocket client disconnected")

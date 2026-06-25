@@ -4,7 +4,19 @@ import random
 import math
 import redis
 import threading
+import pandas as pd
+import os
 from datetime import datetime
+
+# Load dataset
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dataset_path = os.path.join(base_dir, "Dataset/Industrial_fault_detection.csv")
+try:
+    industrial_df = pd.read_csv(dataset_path)
+    print(f"✅ Loaded Industrial Fault Dataset: {len(industrial_df)} rows")
+except Exception as e:
+    industrial_df = None
+    print(f"⚠️ Could not load Industrial Fault Dataset: {e}")
 
 # Connect to Redis (port 6380 on host, 6379 inside container)
 try:
@@ -126,12 +138,53 @@ def generate_sensor_data(timestamp, elapsed_seconds):
         "compound_alerts": []
     }
 
-    # Start with baseline
-    for sid, base_val in BASELINE.items():
-        data["sensors"][sid] = base_val + \
-            random.uniform(-0.5, 0.5)  # Small noise
+    # Stream from real dataset if available
+    if industrial_df is not None and not industrial_df.empty:
+        # Loop through the dataset
+        row_idx = int(elapsed_seconds) % len(industrial_df)
+        row = industrial_df.iloc[row_idx]
+        
+        # Map dataset columns to sensor IDs
+        data["sensors"] = {
+            "S1": row.get("Temperature", 40.0),    # Z1 Gas/Temp
+            "S2": row.get("Temperature", 40.0) + random.uniform(-1,1),
+            "S3": row.get("Pressure", 60.0),       # Z1 Pressure
+            "S4": row.get("Temperature", 40.0) * 0.9,
+            "S5": row.get("Vibration", 2.0),
+            "S6": row.get("Pressure", 60.0) * 1.1,
+            "S7": row.get("Flow_Rate", 5.0),
+            "S8": row.get("Current", 10.0),
+            "S9": row.get("Vibration", 2.0) * 1.5,
+            "S10": row.get("Voltage", 220.0),
+            "S11": row.get("Temperature", 40.0) * 0.8,
+            "S12": row.get("Pressure", 60.0) * 1.2,
+            "S13": row.get("Flow_Rate", 5.0) * 0.9,
+            "S14": row.get("Current", 10.0) * 1.1,
+            "S15": row.get("Vibration", 2.0) * 0.8,
+            "S16": row.get("Pressure", 60.0) * 1.3,
+            "S17": row.get("Temperature", 40.0) * 1.5,
+            "S18": row.get("Flow_Rate", 5.0) * 1.2,
+            "S19": row.get("Vibration", 2.0) * 1.2,
+            "S20": row.get("Pressure", 60.0) * 0.9
+        }
+        
+        fault_type = row.get("Fault_Type", 0)
+        if fault_type > 0:
+            data["compound_alerts"].append({
+                "scenario": f"Dataset Fault Detected: Type {fault_type}",
+                "severity": 1.0,
+                "permits": ["P001", "P003"]
+            })
+            # Inject a critical gas spike to force the system to react
+            data["sensors"]["S1"] += 50
+            data["sensors"]["S3"] += 80
+            
+    else:
+        # Fallback to baseline
+        for sid, base_val in BASELINE.items():
+            data["sensors"][sid] = base_val + random.uniform(-0.5, 0.5)
 
-    # Apply compound scenarios
+    # Apply scenario drift overlays if any scenario is manually active
     for scenario in SCENARIOS:
         trigger = scenario["trigger_time"]
         duration = scenario["duration"]
