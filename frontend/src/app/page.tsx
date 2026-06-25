@@ -31,7 +31,7 @@ export default function Home() {
          <span className="text-[8px] uppercase text-slate-500 tracking-widest font-bold my-auto ml-2 mr-1">Demo Scenarios</span>
          <button onClick={() => triggerAction('/api/scenario/monitor')} className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-[10px] hover:bg-slate-700" title="Normal">▶</button>
          <button onClick={() => triggerAction('/api/scenario/critical_incident')} className="w-6 h-6 flex items-center justify-center rounded-full bg-orange-950 text-orange-500 text-[10px] hover:bg-orange-900" title="Incident">⚠</button>
-         <button onClick={() => triggerAction('/api/scenario/explosion')} className="w-6 h-6 flex items-center justify-center rounded-full bg-red-950 text-red-500 text-[10px] hover:bg-red-900" title="Explosion">🔥</button>
+         <button onClick={() => triggerAction('/api/scenario/explosion')} className="w-6 h-6 flex items-center justify-center rounded-full bg-red-950 text-red-500 text-[10px] hover:bg-red-900" title="Critical Incident">🔥</button>
       </div>
 
       <WarRoom data={data} triggerAction={triggerAction} isConnected={isConnected} />
