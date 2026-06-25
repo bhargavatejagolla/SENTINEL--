@@ -377,7 +377,7 @@ async def upload_cctv(file: UploadFile = File(...)):
     
     # Update global state to reflect a massive risk increase due to CCTV
     latest_enhanced_data["cctv"] = {
-        "intrusion": True,
+        "status": "violation",
         "message": "🚨 UNAUTHORIZED PERSONNEL (NO HELMET DETECTED)"
     }
     # Force risk up to simulate immediate impact

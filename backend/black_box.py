@@ -51,7 +51,7 @@ def record_event(zone_id, risk_score, contributors, senate_votes, final_decision
         parent_hash = result[0] if result else "0" * 64
         
         # Create a unique event ID
-        event_id = f"BLK-{datetime.now().strftime('%Y%m%d%H%M%S')}-{hashlib.md5(str(risk_score).encode()).hexdigest()[:6]}"
+        event_id = f"BLK-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
         
         # Prepare data for hashing
         data_string = json.dumps({

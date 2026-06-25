@@ -248,17 +248,39 @@ export default function ThreeScene({ riskScore = 10, zoneData = [] }: ThreeScene
 
   // Update zone colors when risk changes
   useEffect(() => {
-    zoneMeshesRef.current.forEach((mesh, zoneId) => {
-      const baseColor = new THREE.Color(mesh.userData.baseColor);
-      const riskFactor = riskScore / 100;
-      // Shift to red as risk increases
-      const r = baseColor.r + (1 - baseColor.r) * riskFactor * 0.8;
-      const g = baseColor.g * (1 - riskFactor * 0.7);
-      const b = baseColor.b * (1 - riskFactor * 0.7);
-      (mesh.material as THREE.MeshStandardMaterial).color.setRGB(r, g, b);
-      // Increase emissive intensity
-      (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.3 + riskFactor * 0.8;
-    });
+    let animationFrame: number;
+    let time = 0;
+
+    const animateColors = () => {
+      time += 0.05;
+      zoneMeshesRef.current.forEach((mesh, zoneId) => {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        const baseColor = new THREE.Color(mesh.userData.baseColor);
+
+        if (riskScore > 70) {
+          // FLASHING RED (Critical)
+          const pulse = (Math.sin(time * 5) + 1) / 2; // 0 to 1
+          mat.color.setRGB(1, pulse * 0.2, pulse * 0.2);
+          mat.emissive.setRGB(1, 0, 0);
+          mat.emissiveIntensity = 0.8 + pulse * 0.5;
+        } else if (riskScore > 40) {
+          // SOLID YELLOW (Warning)
+          mat.color.setRGB(1, 0.8, 0.2);
+          mat.emissive.setRGB(0.8, 0.6, 0.1);
+          mat.emissiveIntensity = 0.6;
+        } else {
+          // NORMAL
+          mat.color.copy(baseColor);
+          mat.emissive.copy(baseColor).multiplyScalar(0.15);
+          mat.emissiveIntensity = 0.3;
+        }
+      });
+      animationFrame = requestAnimationFrame(animateColors);
+    };
+
+    animationFrame = requestAnimationFrame(animateColors);
+
+    return () => cancelAnimationFrame(animationFrame);
   }, [riskScore]);
 
   return <div ref={containerRef} className="w-full h-full min-h-[500px] rounded-xl overflow-hidden" />;

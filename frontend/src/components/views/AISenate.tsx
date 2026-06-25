@@ -39,9 +39,9 @@ export default function AISenate({ senate, compliance }: { senate: any, complian
         {agents.map((agent, idx) => (
           <motion.div 
             key={idx}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: idx * 0.1 }}
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: idx * 1.5, type: 'spring', stiffness: 100 }}
             className={`rounded-2xl p-6 border flex flex-col items-center text-center justify-center min-h-[200px] transition-all ${getColorClasses(agent.color)}`}
           >
             <div className="text-4xl mb-4">{agent.icon}</div>

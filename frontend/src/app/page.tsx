@@ -109,7 +109,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-black z-0" />
         
         <div className="absolute inset-0 z-10">
-          {currentView === 'command' && <CommandCenter riskScore={riskScore} intelligence={intelligence} countdown={countdown} />}
+          {currentView === 'command' && <CommandCenter riskScore={riskScore} intelligence={intelligence} countdown={countdown} sensors={data?.sensors} />}
           
           {currentView === 'twin' && (
             <div className="w-full h-full p-6 animate-in fade-in duration-700">
@@ -125,6 +125,40 @@ export default function Home() {
           {currentView === 'history' && <HistoricalMemory intelligence={intelligence} />}
           {currentView === 'whatif' && <WhatIfSimulator whatif={whatif} executeAction={() => triggerAction('/execute')} />}
           {currentView === 'execute' && <ExecuteIntervention onExecute={() => triggerAction('/execute')} hasExecuted={action?.status === 'Executed'} />}
+        </div>
+
+        {/* Live Timeline Overlay */}
+        <div className="absolute right-0 top-0 bottom-0 w-80 bg-black/60 backdrop-blur-md border-l border-white/5 p-4 flex flex-col z-20">
+          <div className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-4 border-b border-white/5 pb-2">Event Timeline</div>
+          <div className="flex-1 overflow-y-auto flex flex-col gap-3 font-mono text-[10px]">
+            {data?.timestamp && (
+              <div className="flex flex-col gap-1 text-slate-300">
+                <span className="text-blue-400">[{data.timestamp.split('T')[1]?.substring(0, 8)}] System Live</span>
+                <span>Active Shift: {data.shift || 'DAY'}</span>
+              </div>
+            )}
+            {data?.compound_alerts?.map((alert: any, i: number) => (
+              <div key={i} className="flex flex-col gap-1 p-2 bg-red-950/30 border border-red-500/20 rounded">
+                <span className="text-red-400">[{new Date().toLocaleTimeString()}] ALERT</span>
+                <span className="text-white">{alert.scenario}</span>
+                <span className="text-slate-400">Severity: {(alert.severity * 100).toFixed(0)}%</span>
+              </div>
+            ))}
+            {data?.cctv?.status === 'violation' && (
+              <div className="flex flex-col gap-1 p-2 bg-orange-950/30 border border-orange-500/20 rounded">
+                <span className="text-orange-400">[{new Date().toLocaleTimeString()}] VISION ENGINE</span>
+                <span className="text-white">PPE Violation Detected (Missing Helmet)</span>
+                <span className="text-slate-400">Risk increased by +35</span>
+              </div>
+            )}
+            {senate?.decision && (
+              <div className="flex flex-col gap-1 p-2 bg-purple-950/30 border border-purple-500/20 rounded">
+                <span className="text-purple-400">[{new Date().toLocaleTimeString()}] AI SENATE</span>
+                <span className="text-white">Consensus Reached</span>
+                <span className="text-slate-400">Action: {senate.decision}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

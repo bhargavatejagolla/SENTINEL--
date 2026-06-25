@@ -1,14 +1,36 @@
 import { motion } from 'framer-motion';
 
+import { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+
 export default function CommandCenter({
   riskScore,
   intelligence,
   countdown,
+  sensors,
 }: {
   riskScore: number;
   intelligence: any;
   countdown: number | null | undefined;
+  sensors?: any;
 }) {
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (sensors && Object.keys(sensors).length > 0) {
+      setHistory(prev => {
+        const newData = {
+          time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: 'numeric', minute: 'numeric', second: 'numeric' }),
+          gas: sensors.S1 || 0,
+          temp: sensors.S17 || 0,
+          pressure: sensors.S3 || 0,
+        };
+        const updated = [...prev, newData];
+        if (updated.length > 20) updated.shift();
+        return updated;
+      });
+    }
+  }, [sensors]);
   const getRiskColor = (score: number) => {
     if (score > 70) return 'text-red-500 shadow-red-500/50';
     if (score > 40) return 'text-yellow-500 shadow-yellow-500/50';
@@ -103,10 +125,66 @@ export default function CommandCenter({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-        <div className="lg:col-span-2 bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col justify-center items-center relative group">
+        <div className="lg:col-span-2 bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col relative group overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <h3 className="text-xl font-light text-slate-400 mb-4 tracking-widest uppercase text-center w-full">Telemetry Map (Digital Twin Active)</h3>
-          <p className="text-slate-600 text-sm mb-4">View switches dynamically to Digital Twin tab...</p>
+          <h3 className="text-sm font-bold text-slate-400 mb-4 tracking-widest uppercase">Live Telemetry Streams (Dataset)</h3>
+          
+          <div className="flex-1 flex gap-4 h-48 w-full z-10">
+            {/* Gas Chart */}
+            <div className="flex-1 flex flex-col">
+              <div className="text-[10px] text-emerald-400 mb-1 uppercase tracking-widest font-mono flex justify-between">
+                <span>Gas Level (S1)</span>
+                <span>{sensors?.S1?.toFixed(1) || 0} ppm</span>
+              </div>
+              <div className="flex-1 bg-black/50 border border-white/5 rounded-lg">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={history}>
+                    <YAxis domain={[0, 100]} hide />
+                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    <Line type="monotone" dataKey="gas" stroke="#10b981" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <ReferenceLine y={40} stroke="#f59e0b" strokeDasharray="3 3" />
+                    <ReferenceLine y={70} stroke="#ef4444" strokeDasharray="3 3" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Temp Chart */}
+            <div className="flex-1 flex flex-col">
+              <div className="text-[10px] text-orange-400 mb-1 uppercase tracking-widest font-mono flex justify-between">
+                <span>Temperature (S17)</span>
+                <span>{sensors?.S17?.toFixed(1) || 0} °C</span>
+              </div>
+              <div className="flex-1 bg-black/50 border border-white/5 rounded-lg">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={history}>
+                    <YAxis domain={[0, 800]} hide />
+                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    <Line type="monotone" dataKey="temp" stroke="#f97316" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <ReferenceLine y={300} stroke="#ef4444" strokeDasharray="3 3" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Pressure Chart */}
+            <div className="flex-1 flex flex-col">
+              <div className="text-[10px] text-blue-400 mb-1 uppercase tracking-widest font-mono flex justify-between">
+                <span>Pressure (S3)</span>
+                <span>{sensors?.S3?.toFixed(1) || 0} bar</span>
+              </div>
+              <div className="flex-1 bg-black/50 border border-white/5 rounded-lg">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={history}>
+                    <YAxis domain={[0, 150]} hide />
+                    <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid rgba(255,255,255,0.1)' }} />
+                    <Line type="monotone" dataKey="pressure" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
+                    <ReferenceLine y={90} stroke="#ef4444" strokeDasharray="3 3" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col">
