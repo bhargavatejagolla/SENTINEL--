@@ -21,11 +21,11 @@ export default function ThreeScene({ riskScore = 10, zoneData = [] }: ThreeScene
 
   // Default zones if not provided (matches your topology.json)
   const defaultZones = [
-    { id: 'Z1', name: 'Coke Oven', x: -4, y: 2, risk_multiplier: 1.8 },
-    { id: 'Z2', name: 'Gas Unit', x: 0, y: 3, risk_multiplier: 1.5 },
-    { id: 'Z3', name: 'Storage', x: 4, y: 2, risk_multiplier: 1.4 },
-    { id: 'Z4', name: 'Maintenance', x: -2, y: -2, risk_multiplier: 1.2 },
-    { id: 'Z5', name: 'Dispatch', x: 3, y: -2, risk_multiplier: 1.1 },
+    { id: 'Z1', name: 'Boiler', x: -4, y: 2, risk_multiplier: 1.8 },
+    { id: 'Z2', name: 'Tank Farm', x: 0, y: 3, risk_multiplier: 1.5 },
+    { id: 'Z3', name: 'Control Room', x: 4, y: 2, risk_multiplier: 1.4 },
+    { id: 'Z4', name: 'Compressor', x: -2, y: -2, risk_multiplier: 1.2 },
+    { id: 'Z5', name: 'Storage Area', x: 3, y: -2, risk_multiplier: 1.1 },
   ];
   const zones = zoneData.length > 0 ? zoneData : defaultZones;
 
