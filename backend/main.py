@@ -54,7 +54,14 @@ latest_enhanced_data = {
         "human_reliability": 100,
         "similar_events": 0,
         "trajectory": [10, 10, 10, 10]
-    }
+    },
+    "weather": {"wind_speed": 21, "direction": "North-East", "humidity": 73, "temp": 37},
+    "maintenance": {
+        "Boiler-01": {"installed": "2022", "last_maint": "18 days ago", "useful_life": "41 days", "bearing_wear": 68, "lubrication": "Required", "failure_prob": 31},
+        "Compressor-A": {"installed": "2021", "last_maint": "5 days ago", "useful_life": "120 days", "bearing_wear": 12, "lubrication": "Optimal", "failure_prob": 5}
+    },
+    "ppe_vision": {"helmet": True, "vest": True, "gloves": True, "mask": True, "confidence": 98},
+    "emergency_response": {"accounted": 247, "missing": 0, "assembly": "Zone D", "ambulances": "Standby", "fire": "Standby"}
 }
 
 global_safety_culture = 95
@@ -264,7 +271,11 @@ def redis_listener():
                                 "blackbox": {"last_event": last_blackbox_record},
                                 "cctv": cctv_status,
                                 "safety_culture": safety_culture_status,
-                                "intelligence_layer": intelligence_layer
+                                "intelligence_layer": intelligence_layer,
+                                "weather": raw_data.get("weather", latest_enhanced_data.get("weather")),
+                                "maintenance": latest_enhanced_data.get("maintenance"),
+                                "ppe_vision": raw_data.get("ppe_vision", latest_enhanced_data.get("ppe_vision")),
+                                "emergency_response": raw_data.get("emergency_response", latest_enhanced_data.get("emergency_response"))
                             })
                         last_id = msg_id
         except Exception as e:
@@ -325,6 +336,33 @@ def execute_plan():
     )
     
     return {"status": "success", "action": latest_enhanced_data["action"]}
+
+@app.post("/cancel")
+def cancel_plan():
+    """
+    Operator explicitly rejects or delays the AI recommendation.
+    """
+    global latest_enhanced_data
+    latest_enhanced_data["scenario_active"] = False
+    latest_enhanced_data["countdown"] = None
+    latest_enhanced_data["action"] = {
+        "status": "Cancelled",
+        "message": "Operator overruled AI advisory. Evacuation halted."
+    }
+    
+    # Log to black box as manual intervention
+    black_box.record_event(
+        zone_id="ALL",
+        risk_score=latest_enhanced_data["risk"]["score"],
+        contributors={},
+        senate_votes=[],
+        final_decision=f"OPERATOR VETO: Evacuation Cancelled",
+        ghost_path=[],
+        whatif_plans=[],
+        sensor_snapshot={}
+    )
+    
+    return {"status": "cancelled", "action": latest_enhanced_data["action"]}
 
 @app.get("/blackbox/recent")
 def get_recent_events(limit: int = 10):
@@ -423,62 +461,83 @@ async def run_scenario_sequence(scenario_name: str):
     
     if scenario_name == "critical_incident":
         print("🎬 STARTING CRITICAL INCIDENT SIMULATION 🎬")
-        log_timeline("00:00", "Simulation Started. Normal Operations.")
+        log_timeline("08:14:00", "Simulation Started. Normal Operations.")
         
-        # 1. T+0s: Normal Operations
+        # 1. Normal Operations
         data = {
             "timestamp": datetime.now().isoformat(),
             "sensors": {"S1": 10, "S2": 12, "S3": 5},
             "shift": "DAY",
             "active_permits": [],
             "fatigue_index": 0.1,
-            "cctv_intrusion": False
+            "cctv_intrusion": False,
+            "ppe_vision": {"helmet": True, "vest": True, "gloves": True, "mask": True, "confidence": 98}
         }
         inject(data)
-        await asyncio.sleep(5)
+        await asyncio.sleep(4)
         
-        # 2. T+5s: Shift Change (Fatigue rises)
-        log_timeline("00:05", "Shift Change to NIGHT. Operator Fatigue Rising.")
-        data["shift"] = "NIGHT"
-        data["fatigue_index"] = 0.6
-        data["sensors"]["S1"] = 15
+        # 2. Gas starts leaking
+        log_timeline("08:14:01", "Gas starts leaking at Boiler-01")
+        data["sensors"]["S1"] = 35
         inject(data)
-        await asyncio.sleep(5)
+        await asyncio.sleep(4)
         
-        # 3. T+10s: Hot Work Permit Issued
-        log_timeline("00:10", "Hot Work Permit Issued in Zone Z1.")
-        data["active_permits"] = ["HOT_WORK_Z1"]
-        data["sensors"]["S1"] = 30
-        inject(data)
-        await asyncio.sleep(5)
-        
-        # 4. T+15s: CCTV Intrusion Detected
-        log_timeline("00:15", "CCTV Intrusion Detected. Operator left workstation.")
+        # 3. Worker enters zone
+        log_timeline("08:14:08", "Worker enters Zone Z1")
         data["cctv_intrusion"] = True
         inject(data)
-        await asyncio.sleep(5)
+        await asyncio.sleep(4)
         
-        # 5. T+20s: Gas Spike (Triggers Senate)
-        log_timeline("00:20", "Critical Gas Spike Detected! Senate Activated.")
-        latest_enhanced_data["countdown"] = 30
-        data["sensors"]["S1"] = 85
-        data["sensors"]["S2"] = 75
+        # 4. Helmet not detected
+        log_timeline("08:14:12", "Helmet not detected. Vision AI Confidence: 94%")
+        data["ppe_vision"] = {"helmet": False, "vest": True, "gloves": True, "mask": False, "confidence": 94}
         inject(data)
+        await asyncio.sleep(4)
         
-        # Countdown loop
+        # 5. Pressure rises
+        log_timeline("08:14:19", "Pressure rises in connected pipelines")
+        data["sensors"]["S1"] = 65
+        data["sensors"]["S3"] = 75
+        inject(data)
+        await asyncio.sleep(4)
+        
+        # 6. Historical Match
+        log_timeline("08:14:27", "Historical match: Vizag 2020 (89% similarity)")
+        latest_enhanced_data["risk"]["contributors"]["historical_similarity"] = 0.89
+        inject(data)
+        await asyncio.sleep(4)
+        
+        # 7. AI Senate debates
+        log_timeline("08:14:35", "AI Senate debates response")
+        data["sensors"]["S1"] = 92
+        inject(data)
+        await asyncio.sleep(4)
+        
+        # 8. Compliance Veto
+        log_timeline("08:14:42", "Compliance engine validates protocol. Requesting Operator Approval.")
+        latest_enhanced_data["countdown"] = 30
+        
+        # Wait for operator decision
         for i in range(30, 0, -1):
+            if not latest_enhanced_data.get("scenario_active"):
+                break # Cancelled by user
+            
+            # If operator executed
+            if latest_enhanced_data.get("action", {}).get("status") == "Executed":
+                log_timeline("08:14:45", "Operator approves evacuation")
+                await asyncio.sleep(2)
+                log_timeline("08:14:52", "Workers accounted: 247/247")
+                await asyncio.sleep(2)
+                log_timeline("08:15:10", "Incident resolved. Plant safely shut down.")
+                break
+                
             latest_enhanced_data["countdown"] = i
-            if i == 20:
-                log_timeline("00:30", "Senate Debate Concluded. Proposed Delay.")
-            if i == 10:
-                log_timeline("00:40", "Compliance Guardrail VETOED Senate. Override Initiated.")
             await asyncio.sleep(1)
             
-        latest_enhanced_data["countdown"] = 0
-        log_timeline("00:50", "EVACUATION EXECUTED. Black Box Generated.")
-        
-        # Auto-execute
-        execute_plan()
+        if latest_enhanced_data.get("scenario_active") and latest_enhanced_data["countdown"] == 1:
+            latest_enhanced_data["countdown"] = 0
+            log_timeline("08:15:14", "AUTO-EVACUATION EXECUTED (Timeout reached).")
+            execute_plan()
         
     elif scenario_name == "explosion":
         print("🎬 STARTING EMERGENCY EXPLOSION SCENARIO 🎬")

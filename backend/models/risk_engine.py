@@ -67,25 +67,25 @@ def extract_features_from_live_data(live_data):
         elif "temperature" in sid.lower() or sid in ["S6", "S12", "S17"]:
             zone_temp.setdefault(zone, []).append(val)
     
-    # Build features
-    gas_avg = np.mean([v for vals in zone_gas.values() for v in vals]) if zone_gas else 10
-    gas_max = np.max([v for vals in zone_gas.values() for v in vals]) if zone_gas else 10
-    vib_avg = np.mean([v for vals in zone_vibration.values() for v in vals]) if zone_vibration else 1
-    vib_max = np.max([v for vals in zone_vibration.values() for v in vals]) if zone_vibration else 1
-    press_avg = np.mean([v for vals in zone_pressure.values() for v in vals]) if zone_pressure else 80
-    temp_avg = np.mean([v for vals in zone_temp.values() for v in vals]) if zone_temp else 200
+    # Build features (cast to native Python types to avoid JSON serialization errors)
+    gas_avg = float(np.mean([v for vals in zone_gas.values() for v in vals])) if zone_gas else 10.0
+    gas_max = float(np.max([v for vals in zone_gas.values() for v in vals])) if zone_gas else 10.0
+    vib_avg = float(np.mean([v for vals in zone_vibration.values() for v in vals])) if zone_vibration else 1.0
+    vib_max = float(np.max([v for vals in zone_vibration.values() for v in vals])) if zone_vibration else 1.0
+    press_avg = float(np.mean([v for vals in zone_pressure.values() for v in vals])) if zone_pressure else 80.0
+    temp_avg = float(np.mean([v for vals in zone_temp.values() for v in vals])) if zone_temp else 200.0
     
-    num_permits = len(permits)
+    num_permits = int(len(permits))
     is_night = 1 if shift == "NIGHT" else 0
     hot_work = 1 if "P001" in permits else 0
     confined = 1 if "P002" in permits else 0
     maintenance = 1 if "P003" in permits else 0
     
     # Interaction features
-    gas_permits = gas_avg * num_permits
-    gas_night = gas_avg * is_night
-    vib_maintenance = vib_avg * maintenance
-    gas_hotwork = gas_avg * hot_work
+    gas_permits = float(gas_avg * num_permits)
+    gas_night = float(gas_avg * is_night)
+    vib_maintenance = float(vib_avg * maintenance)
+    gas_hotwork = float(gas_avg * hot_work)
     
     features = {
         "gas_avg": gas_avg,
@@ -96,7 +96,7 @@ def extract_features_from_live_data(live_data):
         "temp_avg": temp_avg,
         "num_permits": num_permits,
         "is_night": is_night,
-        "elapsed_seconds": elapsed,
+        "elapsed_seconds": float(elapsed),
         "hot_work_present": hot_work,
         "confined_present": confined,
         "maintenance_present": maintenance,

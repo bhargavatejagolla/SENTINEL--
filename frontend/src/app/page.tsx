@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
 import HeroLanding from '@/components/views/HeroLanding';
-import WarRoom from '@/components/views/WarRoom';
+import CommandCenter from '@/components/views/CommandCenter';
 import AICopilot from '@/components/AICopilot';
 
 export default function Home() {
   const { data, isConnected } = useWebSocket();
-  const [inWarRoom, setInWarRoom] = useState(false);
+  const [inCommandCenter, setInCommandCenter] = useState(false);
 
   const triggerAction = async (endpoint: string) => {
     try {
@@ -19,8 +19,8 @@ export default function Home() {
     }
   };
 
-  if (!inWarRoom) {
-    return <HeroLanding onEnter={() => setInWarRoom(true)} />;
+  if (!inCommandCenter) {
+    return <HeroLanding onEnter={() => setInCommandCenter(true)} />;
   }
 
   return (
@@ -34,7 +34,7 @@ export default function Home() {
          <button onClick={() => triggerAction('/api/scenario/explosion')} className="w-6 h-6 flex items-center justify-center rounded-full bg-red-950 text-red-500 text-[10px] hover:bg-red-900" title="Critical Incident">🔥</button>
       </div>
 
-      <WarRoom data={data} triggerAction={triggerAction} isConnected={isConnected} />
+      <CommandCenter data={data} triggerAction={triggerAction} isConnected={isConnected} />
       
       <AICopilot />
     </main>
